@@ -1,0 +1,108 @@
+@page "/plantform/{id?}"
+@inject NavigationManager Nav
+@inject PlantService _service
+@using gardenit_web.Data
+
+
+
+<div>
+    <h2>@pageTitle</h2>
+    <hr/>
+    <div>
+        <EditForm Model="@model" OnValidSubmit="@HandleValidSubmit" enctype="multipart/form-data">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label>Name</label>
+                <InputText @bind-Value="@model.Name" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <label>Type</label>
+                <InputText @bind-Value="@model.Type" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <label>Days Between Watering</label>
+                <InputNumber @bind-Value="@model.DaysBetweenWatering" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <InputTextArea @bind-Value="@model.Notes" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <label>Image</label>
+                <InputFile OnChange="@LoadFiles"  accept="image/" />
+            </div>
+            
+            @if (model != null && model.HasImage) {
+                <div class="image-holder-details">
+                    <img class="plant-image" src="image/@model.ImageName" alt="@model.Name"/>
+                </div>
+            }
+
+            <button type="submit" class="btn btn-success">
+                @buttonText
+            </button>
+        </EditForm>
+
+    </div>
+    <br/>
+    <div>
+        <a href="plants">Back to List</a>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private string _mode;
+    private string pageTitle;
+    private string buttonText = "Save";
+    private PlantFormModel model;
+
+    protected override void OnInitialized()
+    {
+        model = new PlantFormModel() {
+            Id = Guid.NewGuid(),
+            Name = "Test plant",
+            Type = "Plant type",
+            Notes = "these are some notes",
+            DaysBetweenWatering = 3
+        };
+        _mode = "create";
+        pageTitle = "New Plant";
+
+        if (!String.IsNullOrEmpty(Id)) {
+            _mode = "edit";
+            pageTitle = "Edit Plant";
+            var plant = _service.GetPlant(Guid.Parse(Id));
+            // TODO: need a check if doesn't exist
+            model.Id = plant.Id;
+            model.Name = plant.Name;
+            model.Notes = plant.Notes;
+            model.Type = plant.Type;
+            model.DaysBetweenWatering = plant.DaysBetweenWatering;
+            model.ImageName = plant.ImageName;
+        }
+    }
+
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        model.ImageFile = e.File;
+    }
+
+    
+    private async Task HandleValidSubmit()
+    {
+        if (_mode == "create") {
+            await _service.CreatePlant(model);
+            Nav.NavigateTo("plants");
+        } else {
+            await _service.UpdatePlant(model.Id, model);
+            Nav.NavigateTo($"plant/{model.Id}");
+        }
+    }
+}

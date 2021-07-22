@@ -1,0 +1,103 @@
+﻿@page "/plant/{id}"
+
+@using gardenit_web.Data
+@inject PlantService _service
+@inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+
+@if (Model == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-sm-7">
+            <h3>@Model.Name</h3>
+            <br/>
+            <div class="image-holder-details">
+                <img class="card-img-top plant-image" src="image/@Model.ImageName" alt="@Model.Name"/>
+            </div>
+            <dl class="row">
+                <dt class="col-sm-4">Type</dt>
+                <dd class="col-sm-8">@Model.Type</dd>
+
+                <dt class="col-sm-4">Date Added</dt>
+                <dd class="col-sm-8">@Model.CreateDate</dd>
+
+                <dt class="col-sm-4">Days between Watering</dt>
+                <dd class="col-sm-8">@Model.DaysBetweenWatering</dd>
+
+                <dt class="col-sm-4">Next Watering Date</dt>
+                <dd class="col-sm-8">@Model.NextWateringDate</dd>
+
+                <dt class="col-sm-4">Notes</dt>
+                <dd class="col-sm-8">@Model.Notes</dd>
+            </dl>
+            <div>
+                <a href="plantform/@Model.Id">Edit</a>
+                <span>&nbsp;&nbsp;</span>
+                <button class="btn btn-danger" @onclick="HandleDelete">
+                    Delete
+                </button>
+            </div>
+
+        </div>
+        <div class="col-sm-5">
+            <table class="table watering-table">
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            <span>Waterings</span>
+                            <button class="btn btn-primary btn-sm" style="float:right" @onclick="HandleWater">
+                                Water
+                            </button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var watering in Model.Waterings.OrderByDescending(x => x.WateringDate)) {
+                        <tr>
+                            <td>
+                                @watering.WateringDate.ToString("MMM d, yyyy hh:mmtt")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private PlantSummary Model;
+
+    protected override void OnInitialized()
+    {  
+        Model = _service.GetPlant(Guid.Parse(Id));
+    }
+
+    // Needed for datatables...
+    protected override async Task OnAfterRenderAsync(bool first) {
+        if (first) {
+            await JSRuntime.InvokeAsync<string>("TestDataTablesAdd", "");
+        }  
+    }
+
+    private void HandleDelete() {
+        // TODO: Ask confirmation
+        _service.DeletePlant(Model.Id);
+        Nav.NavigateTo($"plants");
+    }
+
+    private async Task HandleWater() {
+        // TODO: Some sort of loading screen
+        await _service.WaterPlant(Model.Id);
+        Nav.NavigateTo($"plant/{Model.Id}", true);
+    }
+}

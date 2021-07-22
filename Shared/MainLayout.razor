@@ -1,0 +1,39 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    @* <div class="sidebar">
+        <NavMenu />
+    </div> *@
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3 my-bg">
+            <div class="container">
+                <a class="navbar-brand" href="plants">
+                    <img src="image/main_image.png" width="30" height="26" alt="">
+                    <span class="text-light">
+                         &nbsp;
+                        GardenIt
+                    </span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                @* <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <partial name="_LoginPartial" />
+                </div> *@
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @Body
+        </main>
+    </div>
+
+    <footer class="border-top footer text-light my-bg">
+        <div class="container">
+            &copy; 2021 - GardenIt - <a class="text-light" href="/">Privacy</a>
+        </div>
+    </footer>
+</div>
