@@ -5,13 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components.Forms;
 
 using gardenit_web.Api;
 using gardenit_api_classes.Plant;
 using gardenit_api_classes.Water;
-
+using gardenit_api_classes.Moisture;
 
 namespace gardenit_web.Data
 {
@@ -44,7 +43,9 @@ namespace gardenit_web.Data
                 Notes = plant.Notes,
                 Type = plant.Type,
                 DaysBetweenWatering = plant.DaysBetweenWatering,
-                ImageName = imageName
+                ImageName = imageName,
+                PollPeriodMinutes = plant.PollPeriodMinutes,
+                HasDevice = plant.HasDevice,
             };
 
             _api.Post("plant", req);
@@ -57,17 +58,27 @@ namespace gardenit_web.Data
                 Notes = plant.Notes,
                 Type = plant.Type,
                 DaysBetweenWatering = plant.DaysBetweenWatering,
+                PollPeriodMinutes = plant.PollPeriodMinutes,
+                HasDevice = plant.HasDevice,
                 ImageName = (imageName == DEFAULT_IMAGE_NAME) ? plant.ImageName : imageName
             };
 
             _api.Put($"plant/{plantId}", req);
         }
 
-        public async Task WaterPlant(Guid plantId) {
+        public async Task WaterPlant(Guid plantId, int seconds) {
             var req = new WateringRequest() {
-                PlantId = plantId
+                PlantId = plantId,
+                Seconds = seconds
             };
             await _api.PostAsync("watering", req);
+        }
+
+        public async Task RequestMoistureReading(Guid plantId) {
+            var req = new MoistureReadingRequest() {
+                PlantId = plantId
+            };
+            await _api.PostAsync("moisture/request", req);
         }
 
         public void DeletePlant(Guid plantId) {
@@ -83,8 +94,15 @@ namespace gardenit_web.Data
                 DaysBetweenWatering = plant.DaysBetweenWatering,
                 ImageName = plant.ImageName,
                 CreateDate = plant.CreateDate,
+                HasDevice = plant.HasDevice,
+                PollPeriodMinutes = plant.PollPeriodMinutes,
                 Waterings = plant.Waterings.Select(x => new Watering() {
-                    WateringDate = x.WateringDate
+                    WateringDate = x.WateringDate,
+                    Seconds = x.Seconds
+                }).ToList(),
+                MoistureReadings = plant.MoistureReadings.Select(x => new MoistureReading() {
+                    ReadDate = x.ReadDate,
+                    Value = x.Value
                 }).ToList()
             };
         }

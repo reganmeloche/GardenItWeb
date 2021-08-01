@@ -26,7 +26,12 @@ namespace gardenit_web.Data
         [MaxLength(400)]
         public string Notes { get; set; }
 
-        //public IFormFile ImageFile { get; set; }
+        public bool HasDevice { get; set; }
+
+        [Required]
+        [Range(1,120)]
+        public int PollPeriodMinutes { get; set; }
+
         public IBrowserFile ImageFile { get; set; }
 
         public string ImageName { get; set; }

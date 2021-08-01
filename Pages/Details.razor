@@ -1,6 +1,7 @@
 ﻿@page "/plant/{id}"
 
 @using gardenit_web.Data
+@using ChartJs.Blazor.LineChart
 @inject PlantService _service
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
@@ -12,27 +13,30 @@
 else
 {
     <div class="row">
-        <div class="col-sm-7">
+        <div class="col-sm-6">
             <h3>@Model.Name</h3>
             <br/>
             <div class="image-holder-details">
                 <img class="card-img-top plant-image" src="image/@Model.ImageName" alt="@Model.Name"/>
             </div>
             <dl class="row">
-                <dt class="col-sm-4">Type</dt>
-                <dd class="col-sm-8">@Model.Type</dd>
+                <dt class="col-sm-6">Type</dt>
+                <dd class="col-sm-6">@Model.Type</dd>
 
-                <dt class="col-sm-4">Date Added</dt>
-                <dd class="col-sm-8">@Model.CreateDate</dd>
+                <dt class="col-sm-6">Date Added</dt>
+                <dd class="col-sm-6">@Model.CreateDate</dd>
 
-                <dt class="col-sm-4">Days between Watering</dt>
-                <dd class="col-sm-8">@Model.DaysBetweenWatering</dd>
+                <dt class="col-sm-6">Moisture Poll Period (min)</dt>
+                <dd class="col-sm-6">@Model.PollPeriodMinutes</dd>
 
-                <dt class="col-sm-4">Next Watering Date</dt>
-                <dd class="col-sm-8">@Model.NextWateringDate</dd>
+                <dt class="col-sm-6">Days between Watering</dt>
+                <dd class="col-sm-6">@Model.DaysBetweenWatering</dd>
 
-                <dt class="col-sm-4">Notes</dt>
-                <dd class="col-sm-8">@Model.Notes</dd>
+                <dt class="col-sm-6">Next Watering Date</dt>
+                <dd class="col-sm-6">@Model.NextWateringDate</dd>
+
+                <dt class="col-sm-6">Notes</dt>
+                <dd class="col-sm-6">@Model.Notes</dd>
             </dl>
             <div>
                 <a href="plantform/@Model.Id">Edit</a>
@@ -43,28 +47,50 @@ else
             </div>
 
         </div>
-        <div class="col-sm-5">
-            <table class="table watering-table">
-                <thead>
-                    <tr>
-                        <th scope="col">
-                            <span>Waterings</span>
-                            <button class="btn btn-primary btn-sm" style="float:right" @onclick="HandleWater">
-                                Water
-                            </button>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var watering in Model.Waterings.OrderByDescending(x => x.WateringDate)) {
+        <div class="col-sm-6">
+            <div>
+                <h3 style="display:inline">Plant Data</h3>
+                <div class="btn-group" role="group" style="float:right">
+                    <button class="btn btn-primary btn-sm"  @onclick="@(x => HandleWater(5))">
+                        Water 5
+                    </button>
+                    <button class="btn btn-secondary btn-sm" @onclick="HandleMoistureRequest">
+                        Moisture
+                    </button>
+                </div>
+            </div>
+            <div>
+                <Chart Config="_config"></Chart>
+            </div>
+            <hr/>
+            <div>
+                <table class="table watering-table">
+                    <thead>
                         <tr>
-                            <td>
-                                @watering.WateringDate.ToString("MMM d, yyyy hh:mmtt")
-                            </td>
+                            <th scope="col">
+                                Watering Date
+                            </th>
+                            <th scope="col" class="text-center">
+                                Seconds
+                            </th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var watering in Model.Waterings.OrderByDescending(x => x.WateringDate)) {
+                            <tr>
+                                <td>
+                                    @watering.WateringDate.ToString("MMM d, yyyy hh:mmtt")
+                                </td>
+                                <td class="text-center">
+                                    @watering.Seconds
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+            </div>
+            
         </div>
         
     </div>
@@ -74,12 +100,14 @@ else
 @code {
     [Parameter]
     public string Id { get; set; }
-
     private PlantSummary Model;
+    private LineConfig _config;
+
 
     protected override void OnInitialized()
     {  
         Model = _service.GetPlant(Guid.Parse(Id));
+        InitChart();
     }
 
     // Needed for datatables...
@@ -95,9 +123,98 @@ else
         Nav.NavigateTo($"plants");
     }
 
-    private async Task HandleWater() {
+    private async Task HandleWater(int seconds) {
         // TODO: Some sort of loading screen
-        await _service.WaterPlant(Model.Id);
+        await _service.WaterPlant(Model.Id, seconds);
         Nav.NavigateTo($"plant/{Model.Id}", true);
+    }
+
+    private async Task HandleMoistureRequest() {
+        await _service.RequestMoistureReading(Model.Id);
+        Nav.NavigateTo($"plant/{Model.Id}", true);
+    }
+
+    // Should move this to a new file...
+    protected void InitChart()
+    {
+        _config = new LineConfig
+        {
+            Options = new LineOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Plant Moisture Data"
+                },
+                Tooltips = new Tooltips
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Hover = new Hover
+                {
+                    Mode = InteractionMode.Nearest,
+                    Intersect = true
+                },
+                Scales = new Scales
+                {
+                    XAxes = new List<CartesianAxis>
+                    {
+                        new TimeAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Date"
+                            },
+                            Time = new TimeOptions
+                            {
+                                TooltipFormat = "ll HH:mm"
+                            },
+                        }
+                    },
+                    YAxes = new List<CartesianAxis>
+                    {
+                        new LinearCartesianAxis
+                        {
+                            ScaleLabel = new ScaleLabel
+                            {
+                                LabelString = "Value"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        //_config.Data.Labels.AddRange(GetNextDays(InitalCount).Select(d => d.ToString("o")));
+        //_config.Data.Labels.AddRange()
+
+        IDataset<TimePoint> moistureData = new LineDataset<TimePoint>()
+        {
+            Label = "Moisture Readings",
+            BackgroundColor = ColorUtil.FromDrawingColor(System.Drawing.Color.Black),
+            BorderColor = ColorUtil.FromDrawingColor(System.Drawing.Color.Black),
+            Fill = FillingMode.Disabled
+        };
+        foreach (var reading in Model.MoistureReadings) {
+            moistureData.Add(new TimePoint(reading.ReadDate, reading.Value));
+        }
+
+
+        IDataset<TimePoint> wateringData = new LineDataset<TimePoint>()
+        {
+            Label = "Waterings",
+            BackgroundColor = ColorUtil.FromDrawingColor(System.Drawing.Color.Blue),
+            BorderColor = ColorUtil.FromDrawingColor(System.Drawing.Color.Blue),
+            Fill = FillingMode.Disabled,
+            ShowLine = false
+        };
+        foreach (var watering in Model.Waterings) {
+            wateringData.Add(new TimePoint(watering.WateringDate, 0));
+        }
+
+        _config.Data.Datasets.Add(moistureData);
+        _config.Data.Datasets.Add(wateringData);
     }
 }

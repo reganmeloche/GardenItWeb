@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace gardenit_web.Data
 {
+    // TODO: Can PlantSummary and PlantForm inherit from the same thing...?
     public class PlantSummary
     {
         public Guid Id { get; set; }
@@ -27,6 +28,9 @@ namespace gardenit_web.Data
             } 
         }
         public List<Watering> Waterings { get; set; }
+        public List<MoistureReading> MoistureReadings { get; set; }
+        public bool HasDevice { get; set; }
+        public int PollPeriodMinutes { get; set; }
         public string ImageName { get; set; }
         public bool HasImage {
             get {

@@ -9,5 +9,6 @@ namespace gardenit_web.Data
         //public Guid Id { get; set; }
         //public Guid PlantId { get; set; }
         public DateTime WateringDate { get; set; }
+        public int Seconds { get; set; }
     }
 }

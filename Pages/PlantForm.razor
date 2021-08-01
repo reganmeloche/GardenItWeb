@@ -28,6 +28,11 @@
             </div>
 
             <div class="form-group">
+                <label>Moisture Polling Period</label>
+                <InputNumber @bind-Value="@model.PollPeriodMinutes" class="form-control"/>
+            </div>
+
+            <div class="form-group">
                 <label>Notes</label>
                 <InputTextArea @bind-Value="@model.Notes" class="form-control"/>
             </div>
@@ -70,7 +75,9 @@
             Name = "Test plant",
             Type = "Plant type",
             Notes = "these are some notes",
-            DaysBetweenWatering = 3
+            DaysBetweenWatering = 3,
+            PollPeriodMinutes = 5,
+            HasDevice = false
         };
         _mode = "create";
         pageTitle = "New Plant";
@@ -86,6 +93,8 @@
             model.Type = plant.Type;
             model.DaysBetweenWatering = plant.DaysBetweenWatering;
             model.ImageName = plant.ImageName;
+            model.HasDevice = plant.HasDevice;
+            model.PollPeriodMinutes = plant.PollPeriodMinutes;
         }
     }
 
