@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +17,7 @@ using RestSharp;
 
 using gardenit_web.Data;
 using gardenit_web.Api;
+using gardenit_web.Data.Storage;
 
 namespace gardenit_web
 {
@@ -33,11 +36,18 @@ namespace gardenit_web
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
+            //services.AddScoped<TokenProvider>();
 
-            
+            // Basic DI
             services.AddScoped<PlantService>();
-
             services.AddScoped<IRestClient, RestSharp.RestClient>();
+
+            // Identity and EF
+            var identityDbConnString = Configuration.GetConnectionString("IdentityDb")?? 
+                Environment.GetEnvironmentVariable("IdentityDb");
+            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(identityDbConnString));
+            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<ApplicationDbContext>();
 
             // Api injection
             services.AddScoped<IApi, PlantApi>();
@@ -54,9 +64,19 @@ namespace gardenit_web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Apply migrations
+            using (var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>())
+                {
+                    context.Database.Migrate();
+                }
+            }
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseDatabaseErrorPage();
             }
             else
             {
@@ -70,8 +90,13 @@ namespace gardenit_web
 
             app.UseRouting();
 
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllers();
+                endpoints.MapRazorPages();
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });

@@ -1,0 +1,57 @@
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Mvc.ViewEngines
+@inject IWebHostEnvironment Environment
+@inject ICompositeViewEngine Engine
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GardenIt</title>
+    <link rel="stylesheet" href="~/css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    @* <link rel="stylesheet" href="gardenit-web.styles.css" /> *@
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css"/>
+</head>
+<body>
+    <header>
+        @{ await Html.RenderPartialAsync("_Nav"); }
+    </header>
+
+    <!-- Main -->
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top footer text-light my-bg">
+        <div class="container">
+            &copy; 2021 - GardenIt - <a class="text-light" href="/">Privacy</a>
+        </div>
+    </footer>
+
+    <script
+        src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+
+<!-- Data Tables -->
+<script>
+    function TestDataTablesAdd() {
+        $(document).ready( function () {
+            $('.watering-table').DataTable({
+                "searching": false,   // Search Box will Be Disabled
+                "ordering": false,    // Ordering (Sorting on Each Column)will Be Disabled
+                "info": true,         // Will show "1 to n of n entries" Text at bottom
+                "lengthChange": false // Will Disabled Record number per page
+            });
+        });
+    }
+</script>
