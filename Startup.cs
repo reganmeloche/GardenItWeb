@@ -34,7 +34,12 @@ namespace gardenit_web
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages();
+            services.AddHttpContextAccessor();
+
+            services.AddRazorPages(options =>
+            {
+                //options.Conventions.AuthorizePage("/Details");
+            });
             services.AddServerSideBlazor();
             //services.AddScoped<TokenProvider>();
 
@@ -53,11 +58,16 @@ namespace gardenit_web
             services.AddScoped<IApi, PlantApi>();
             var apiUrl = Configuration["ApiOptions:Url"] ?? 
                 Environment.GetEnvironmentVariable("apiUrl");
+            var encryptionKey = Configuration["ApiOptions:EncryptionKey"] ?? 
+                Environment.GetEnvironmentVariable("apiEncryptionKey");
 
             var apiOptions = new ApiOptions() {
-                Url = apiUrl
+                Url = apiUrl,
+                EncryptionKey = encryptionKey
             };
             services.AddSingleton<IOptions<ApiOptions>>(x => Options.Create(apiOptions));
+
+            services.AddScoped<IEncryptor, Encryptor>();
 
         }
 

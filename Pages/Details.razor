@@ -2,9 +2,14 @@
 
 @using gardenit_web.Data
 @using ChartJs.Blazor.LineChart
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor httpContextAccessor
 @inject PlantService _service
 @inject NavigationManager Nav
 @inject IJSRuntime JSRuntime
+@inject UserManager<IdentityUser> _userManager
+
 
 @if (Model == null)
 {
@@ -102,6 +107,8 @@ else
 
     protected override void OnInitialized()
     {  
+        @* var f = httpContextAccessor.HttpContext;
+        var theUser = _userManager.GetUserId(f.User); *@
         Model = _service.GetPlant(Guid.Parse(Id));
         InitChart();
     }
