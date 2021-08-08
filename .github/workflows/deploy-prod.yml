@@ -1,0 +1,34 @@
+name: Deploy Prod
+
+on: workflow_dispatch
+
+jobs:
+  publish_Deploy:
+      name: Publish and Deploy
+      env:
+        ACR_SERVER: gardenitv2acr.azurecr.io
+        APP_NAME: gardenitwebprod
+      runs-on: ubuntu-latest
+      steps:
+      - name: Generate build number
+        uses: einaregilsson/build-number@v1 
+        env: 
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        with:
+          token: ${{secrets.github_token}}     
+          
+      - name: Print new build number
+        run: echo Build number is $BUILD_NUMBER   
+      - uses: azure/docker-login@v1
+        with:
+          login-server: ${{env.ACR_SERVER}} 
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      - uses: actions/checkout@v1
+      
+      - name: docker build and push client
+        run: |
+          docker build -t ${{env.ACR_SERVER}}/${{env.APP_NAME}}:latest .
+          docker tag ${{env.ACR_SERVER}}/${{env.APP_NAME}}:latest ${{env.ACR_SERVER}}/${{env.APP_NAME}}:$BUILD_NUMBER
+          docker push ${{env.ACR_SERVER}}/${{env.APP_NAME}}:latest
+          docker push ${{env.ACR_SERVER}}/${{env.APP_NAME}}:$BUILD_NUMBER
